@@ -27,7 +27,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "medusa plugin:build",
+    "build": "medusa plugin:build && tsc --emitDeclarationOnly --declaration --outDir .medusa/server",
     "dev": "medusa plugin:develop",
     "typecheck": "tsc --noEmit",
     "test": "jest",
@@ -35,6 +35,10 @@
   },
   "exports": {
     "./package.json": "./package.json",
+    "./providers/paystack/service": {
+      "types": "./.medusa/server/src/providers/paystack/service.d.ts",
+      "default": "./.medusa/server/src/providers/paystack/service.js"
+    },
     "./providers/*": "./.medusa/server/src/providers/*/index.js",
     "./*": "./.medusa/server/src/*.js"
   },

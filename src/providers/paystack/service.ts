@@ -267,4 +267,5 @@ class PaystackProviderService extends AbstractPaymentProvider<PaystackOptions> {
   }
 }
 
+export { PaystackProviderService };
 export default PaystackProviderService;
