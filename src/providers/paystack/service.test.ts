@@ -115,3 +115,35 @@ describe("authorizePayment uses the charge values", () => {
     expect(res.status).toBe("error");
   });
 });
+
+describe("refundPayment scales by the charge ratio", () => {
+  function refundCapturing(calls: Array<{ body: string }>) {
+    global.fetch = (async (_url: string, init: { body: string }) => {
+      calls.push({ body: init.body });
+      return { ok: true, json: async () => ({ status: true }) };
+    }) as unknown as typeof fetch;
+  }
+
+  it("refunds the requested amount as-is when no charge ratio is present (same currency)", async () => {
+    const calls: Array<{ body: string }> = [];
+    refundCapturing(calls);
+    const p = makeProvider();
+    await p.refundPayment({
+      amount: 25,
+      data: { reference: "ref" },
+    } as Parameters<typeof p.refundPayment>[0]);
+    expect(JSON.parse(calls[0].body)).toEqual({ transaction: "ref", amount: 2500 });
+  });
+
+  it("scales the refund by charge_amount/amount for a settled-currency order", async () => {
+    const calls: Array<{ body: string }> = [];
+    refundCapturing(calls);
+    const p = makeProvider();
+    await p.refundPayment({
+      amount: 5, // refund requested in the original currency
+      data: { reference: "ref", amount: 10, charge_amount: 120 },
+    } as Parameters<typeof p.refundPayment>[0]);
+    // ratio = 120/10 = 12 -> 5 * 12 = 60 major units -> 6000 subunits
+    expect(JSON.parse(calls[0].body)).toEqual({ transaction: "ref", amount: 6000 });
+  });
+});
