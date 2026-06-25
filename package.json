@@ -1,6 +1,6 @@
 {
   "name": "medusa-paystack",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Paystack payment provider for Medusa v2",
   "author": "nuette",
   "license": "MIT",
