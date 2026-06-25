@@ -180,6 +180,33 @@ return to your callback page call `sdk.store.cart.complete(cartId)`.
 > with Paystack before the order is created. Never treat the client `onSuccess` as
 > proof of payment on its own.
 
+## Custom settlement currency (subclassing)
+
+By default the provider charges in the cart's own `currency_code`. If your Paystack
+account settles a single currency but your store prices carts in others, subclass the
+provider and override `resolveCharge` to convert. The base class records both the
+original (`amount`/`currency`) and the charged (`charge_amount`/`charge_currency`)
+values, and verifies the captured charge against the latter.
+
+```ts
+// src/modules/paystack/service.ts (in your Medusa app)
+import PaystackProviderService from "medusa-paystack/providers/paystack/service";
+
+class MyPaystackService extends PaystackProviderService {
+  static identifier = "paystack";
+
+  protected async resolveCharge(amount: number, currency_code: string) {
+    if (currency_code.toLowerCase() === "ghs") return { amount, currency: "GHS" };
+    const rate = await myFxLookup(currency_code); // your conversion source
+    return { amount: amount * rate, currency: "GHS" };
+  }
+}
+
+export default MyPaystackService;
+```
+
+Register it as a normal in-app payment provider (`resolve: "./src/modules/paystack"`).
+
 ## Webhook
 
 Create a webhook in your Paystack dashboard pointing at your Medusa server's payment

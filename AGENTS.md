@@ -138,6 +138,16 @@ Add **Paystack** as a payment provider to each region that should accept it: Adm
 | `secret_key` | yes | `process.env.PAYSTACK_SECRET_KEY` | server API calls + webhook signature verification |
 | `reference_prefix` | no | `""` | prepended to generated transaction references |
 
+## Custom settlement currency
+
+If the merchant's Paystack account settles one currency (e.g. GHS) but the store sells
+in others, do NOT fork the provider. Subclass it and override the protected
+`resolveCharge(amount, currency_code)` hook (default returns the cart currency
+unchanged) to return the converted `{ amount, currency }`. Import the class from
+`medusa-paystack/providers/paystack/service`, keep `static identifier = "paystack"`,
+and register the subclass as the app's payment provider. See the README's
+"Custom settlement currency (subclassing)" section.
+
 ## Provider methods (reference)
 
 `initiatePayment` (creates the Paystack transaction), `authorizePayment` (verifies
