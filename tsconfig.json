@@ -11,6 +11,7 @@
     "resolveJsonModule": true,
     "declaration": false,
     "outDir": ".medusa/server",
+    "rootDir": ".",
     "types": ["node", "jest"]
   },
   "include": ["src"],
