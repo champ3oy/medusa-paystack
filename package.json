@@ -1,0 +1,51 @@
+{
+  "name": "medusa-paystack",
+  "version": "0.0.1",
+  "description": "Paystack payment provider for Medusa v2",
+  "author": "nuette",
+  "license": "MIT",
+  "keywords": [
+    "medusa-plugin",
+    "medusa-plugin-payment",
+    "medusa-v2",
+    "paystack",
+    "payment"
+  ],
+  "files": [
+    ".medusa/server",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "medusa plugin:build",
+    "dev": "medusa plugin:develop",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "prepublishOnly": "medusa plugin:build"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./providers/*": "./.medusa/server/src/providers/*/index.js",
+    "./*": "./.medusa/server/src/*.js"
+  },
+  "devDependencies": {
+    "@medusajs/admin-sdk": "2.16.0",
+    "@medusajs/cli": "2.16.0",
+    "@medusajs/framework": "2.16.0",
+    "@medusajs/medusa": "2.16.0",
+    "@medusajs/test-utils": "2.16.0",
+    "@swc/core": "1.5.7",
+    "@swc/jest": "^0.2.36",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.6.0"
+  },
+  "peerDependencies": {
+    "@medusajs/framework": "2.16.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
