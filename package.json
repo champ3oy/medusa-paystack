@@ -15,6 +15,7 @@
     ".medusa/server",
     "package.json",
     "README.md",
+    "AGENTS.md",
     "LICENSE"
   ],
   "scripts": {
