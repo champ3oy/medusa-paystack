@@ -43,10 +43,24 @@ class PaystackProviderService extends AbstractPaymentProvider<PaystackOptions> {
   static identifier = "paystack";
 
   protected options_: PaystackOptions;
+  protected readonly container_: Record<string, unknown>;
 
   constructor(cradle: Record<string, unknown>, options: PaystackOptions) {
     super(cradle, options);
     this.options_ = options ?? {};
+    this.container_ = cradle;
+  }
+
+  /**
+   * Resolve the amount + currency actually charged at Paystack for a cart.
+   * Default: charge the cart's own amount and currency. Override in a subclass
+   * to settle in a different currency (e.g. convert every cart to GHS).
+   */
+  protected async resolveCharge(
+    amount: number,
+    currency_code: string,
+  ): Promise<{ amount: number; currency: string }> {
+    return { amount, currency: currency_code.toUpperCase() };
   }
 
   private get secretKey(): string {
@@ -71,12 +85,17 @@ class PaystackProviderService extends AbstractPaymentProvider<PaystackOptions> {
       throw new Error("Paystack: a customer email is required to initiate payment");
     }
 
+    const { amount: chargeAmount, currency: chargeCurrency } = await this.resolveCharge(
+      Number(amount),
+      currency_code,
+    );
+
     const seed = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const reference = makeReference(seed, this.options_.reference_prefix);
 
     const payload = buildInitializePayload({
-      amount: Number(amount),
-      currencyCode: currency_code,
+      amount: chargeAmount,
+      currencyCode: chargeCurrency,
       email,
       reference,
       sessionId: data?.session_id as string | undefined,
@@ -102,6 +121,8 @@ class PaystackProviderService extends AbstractPaymentProvider<PaystackOptions> {
         authorization_url,
         amount: Number(amount),
         currency: currency_code.toUpperCase(),
+        charge_amount: chargeAmount,
+        charge_currency: chargeCurrency,
       },
     };
   }
@@ -119,8 +140,8 @@ class PaystackProviderService extends AbstractPaymentProvider<PaystackOptions> {
     if (!json.status || !json.data) return { status: "error", data };
 
     const { status, currency, amount } = json.data;
-    const expectedAmount = Math.round(Number(data.amount ?? 0) * 100);
-    const expectedCurrency = String(data.currency ?? "").toUpperCase();
+    const expectedAmount = Math.round(Number(data.charge_amount ?? data.amount ?? 0) * 100);
+    const expectedCurrency = String(data.charge_currency ?? data.currency ?? "").toUpperCase();
 
     const check = assertChargeMatches({
       status,
@@ -170,10 +191,17 @@ class PaystackProviderService extends AbstractPaymentProvider<PaystackOptions> {
     const data = input.data ?? {};
     const reference = data.reference as string;
 
+    // Refund in the charge currency. For carts settled in another currency the
+    // ratio scales the requested (original-currency) refund into the charged
+    // amount; for same-currency carts the ratio is 1.
+    const ratio =
+      data.amount && data.charge_amount
+        ? Number(data.charge_amount) / Number(data.amount)
+        : 1;
     const res = await fetch(`${PAYSTACK_API}/refund`, {
       method: "POST",
       headers: this.authHeader(),
-      body: JSON.stringify(buildRefundPayload(reference, Number(input.amount))),
+      body: JSON.stringify(buildRefundPayload(reference, Number(input.amount) * ratio)),
     });
     const json = (await res.json()) as { status: boolean; message?: string };
 
