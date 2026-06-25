@@ -31,7 +31,7 @@
     "dev": "medusa plugin:develop",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "prepublishOnly": "medusa plugin:build"
+    "prepublishOnly": "npm run build"
   },
   "exports": {
     "./package.json": "./package.json",
